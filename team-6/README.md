@@ -2,9 +2,6 @@
 
 ## Description
 
-## References
-
-    [LangChain docs]()
 ## Dev Notes
 
 ### Linux/WSL:
