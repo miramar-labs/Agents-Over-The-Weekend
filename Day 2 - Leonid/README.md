@@ -6,6 +6,8 @@
 
 ## Additional Links
 
+[Google SRE Books](https://sre.google/books/)
+
 https://github.com/benman1/generative_ai_with_langchain/blob/second_edition/chapter6/tot.ipynb
 
 https://www.nature.com/articles/s41586-023-06924-6
