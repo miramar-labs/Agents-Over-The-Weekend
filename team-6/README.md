@@ -1,4 +1,4 @@
-# Team 6 Project
+# Team 6 AI Agent Project
 
 ## Description
 
