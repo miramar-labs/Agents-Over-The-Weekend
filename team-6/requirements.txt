@@ -1,6 +1,8 @@
 requests
 python-dotenv
 openai
+langchain_google_genai
+langsmith
 langchain
 langchain-openai
 langchain-community
