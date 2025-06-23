@@ -8,3 +8,9 @@ langchain-openai
 langchain-community
 langchain-core
 langchain-text-splitters
+youtube-transcript-api
+google-api-python-client
+sentence-transformers
+faiss-cpu
+tqdm
+numpy
