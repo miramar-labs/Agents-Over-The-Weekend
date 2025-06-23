@@ -62,9 +62,6 @@ And receive a grounded, specific answer with optional speaker attribution.
 
 
 ## Dev Notes
-
-### Linux/WSL:
-
 #### Docs
 - [LangChain docs](https://python.langchain.com/docs/introduction/)
 #### API Keys
@@ -76,6 +73,7 @@ And receive a grounded, specific answer with optional speaker attribution.
 
 - [OpenAI Platform](https://platform.openai.com/docs/overview)
   - get API key`OPENAI_API_KEY`
+### Linux/WSL:
   
 - First set up a python venv and work in that:
 
