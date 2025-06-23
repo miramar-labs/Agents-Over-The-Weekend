@@ -65,14 +65,18 @@ And receive a grounded, specific answer with optional speaker attribution.
 
 ### Linux/WSL:
 
+#### Docs
+- [LangChain docs](https://python.langchain.com/docs/introduction/)
+#### API Keys
 - [Google AI Studio](https://aistudio.google.com/prompts/new_chat)
   - get API key `GOOGLE_API_KEY`
-
-- [LangChain docs](https://python.langchain.com/docs/introduction/)
 
 - [LangSmith](https://smith.langchain.com/)
   - get API key `LANGCHAIN_API_KEY`
 
+- [OpenAI Platform](https://platform.openai.com/docs/overview)
+  - get API key`OPENAI_API_KEY`
+  
 - First set up a python venv and work in that:
 
         # (*if* we need sqlite3) build a version of python with sqlite3 built-in 
