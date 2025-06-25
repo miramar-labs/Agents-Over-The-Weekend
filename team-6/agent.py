@@ -13,7 +13,7 @@ load_dotenv()
 
 assert os.getenv("OPENAI_API_KEY"), "OPENAI_API_KEY is not set"
 assert os.getenv("LANGCHAIN_API_KEY"), "LANGCHAIN_API_KEY is not set"
-
+assert os.getenv("YOUTUBE_API_KEY"), "YOUTUBE_API_KEY is not set"
 
 # %% [markdown]
 # ## Tracability
@@ -36,12 +36,60 @@ For example: 'id1,id2,id3,id4,id5'""")
 sp2=SystemMessage(content="Use the context below to answer the question.")
 
 # %% [markdown]
+# ## Tools
+
+# %%
+from langchain_core.tools import Tool
+from youtube_transcript_api import YouTubeTranscriptApi
+from googleapiclient.discovery import build
+
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
+
+def youtube_search(query, max_results=5):
+    youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=os.getenv("YOUTUBE_API_KEY"))
+    search_response = youtube.search().list(
+        q=query,
+        type="video",
+        part="id,snippet",
+        maxResults=max_results
+    ).execute()
+
+    results = []
+    for item in search_response["items"]:
+        video_id = item["id"]["videoId"]
+        title = item["snippet"]["title"]
+        results.append({"title": title, "video_id": video_id})
+
+    return results
+
+youtube_search_tool = Tool.from_function(
+    func=youtube_search,
+    name="youtube_search",
+    description="Search for ID's of youtube videos that are most relevant to a user's query"
+)
+
+def fetch_youtube_transcript(video_id):
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        return "\n".join([t['text'] for t in transcript])
+    except Exception as e:
+        return f"Error fetching transcript: {e}"
+
+youtube_transcript_tool = Tool.from_function(
+    func=fetch_youtube_transcript,
+    name="fetch_youtube_transcript",
+    description="Returns the full transcript of a YouTube video given its video ID (e.g., 'xZX4KHrqwhM')."
+)
+
+# %% [markdown]
 # ## LLM
 
 # %%
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
+from langchain.agents import initialize_agent, AgentType
 
 # create the LLM
 llm = ChatOpenAI(
@@ -50,6 +98,14 @@ llm = ChatOpenAI(
     callbacks=[tracer]
     )
 
+# create the Agent with tools
+agent = initialize_agent(
+    tools=[youtube_search_tool, youtube_transcript_tool],
+    llm=llm,
+    agent=AgentType.OPENAI_FUNCTIONS,  # or AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION
+    verbose=True
+)
+
 prompt_videos = ChatPromptTemplate.from_messages([
     ("system", """Return a comma separated list of exactly 5 valid YouTube video IDs that are most 
                   relevant to the user's query. 
@@ -57,10 +113,16 @@ prompt_videos = ChatPromptTemplate.from_messages([
     ("human", "{query}")
 ])
 
+prompt_video_transcript= ChatPromptTemplate.from_messages([
+    ("system", """Return the youtube transcript for the given video ID"""),
+    ("human", "{query}")
+])
+
 prompt_answer = ChatPromptTemplate.from_messages([
     ("system", "Use the context below to answer the question."),
     ("human", "{query}\n\nContext:\n{context}")
 ])
+
 
 # %% [markdown]
 # ## Knowledgebase
@@ -74,7 +136,7 @@ embedding_model = OpenAIEmbeddings()
 vectorstore = None  # Global FAISS store
 
 # %% [markdown]
-# ## Tools
+# ## Graph Nodes/Lambdas
 
 # %%
 from langchain_community.vectorstores import FAISS
@@ -84,8 +146,8 @@ def step_get_video_ids(state):
     query = state["query"]
     video_ids=[]
     messages = prompt_videos.invoke({"query": query})
-    response = llm.invoke(messages).content
-    video_ids =response.split(',')
+    response = agent.invoke(messages)
+    video_ids = response['output'].split(',')
     print(f"Retrieved and filtered Video IDs: {video_ids}")
     return {"query": query, "video_ids": video_ids}
 
@@ -94,13 +156,14 @@ def step_get_transcripts(state):
     docs = []
     for vid in video_ids:
         try:
-            parts = YouTubeTranscriptApi.get_transcript(vid)
-            text = " ".join(p["text"] for p in parts)
-            docs.append(Document(page_content=text, metadata={"video_id": vid}))
+            messages = prompt_video_transcript.invoke({"query": query})
+            response = agent.invoke(messages)
+            docs.append(Document(page_content=response['output'], metadata={"video_id": vid}))
         except Exception:
+            print("⚠️ warning: No transcript was retrieved for video {vid}.")
             continue
     if not docs:
-        print("Warning: No transcripts were retrieved for the given video IDs.")
+        print("⚠️ Wwarning: No transcripts were retrieved for the given video IDs.")
     return {"query": state["query"], "documents": docs}
 
 def step_embed_docs(state):
