@@ -63,7 +63,8 @@ And receive a grounded, specific answer with optional speaker attribution.
 
 ## Dev Notes
 #### Docs
-- [LangChain docs](https://python.langchain.com/docs/introduction/)
+- [LangChain](https://python.langchain.com/docs/introduction/)
+- [LangChain Python API](https://python.langchain.com/api_reference/)
 #### API Keys
 - [Google AI Studio](https://aistudio.google.com/prompts/new_chat)
   - get API key `GOOGLE_API_KEY`
