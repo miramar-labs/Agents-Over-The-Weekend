@@ -1,6 +1,3 @@
-# %%
-#! pip install -r requirements.txt
-
 # %% [markdown]
 # ## API Keys
 
@@ -28,12 +25,17 @@ tracer = LangChainTracer()
 
 # %%
 from langchain_core.messages import SystemMessage
+from langchain_core.prompts import SystemMessagePromptTemplate
 
 sp1=SystemMessage(content="""Return a comma separated list of exactly 5 valid YouTube video IDs 
 that are most relevant to the user's query.
 For example: 'id1,id2,id3,id4,id5'""")
 
-sp2=SystemMessage(content="Use the context below to answer the question.")
+sp2=SystemMessagePromptTemplate.from_template(
+    template="Return the youtube transcript for the video with ID {video_id}"
+)
+
+sp3=SystemMessage(content="Use the context below to answer the question.")
 
 # %% [markdown]
 # ## Tools
@@ -79,7 +81,7 @@ def fetch_youtube_transcript(video_id):
 youtube_transcript_tool = Tool.from_function(
     func=fetch_youtube_transcript,
     name="fetch_youtube_transcript",
-    description="Returns the full transcript of a YouTube video given its video ID (e.g., 'xZX4KHrqwhM')."
+    description="Returns the full transcript of a YouTube video given its ID (e.g., 'xZX4KHrqwhM')."
 )
 
 # %% [markdown]
@@ -87,7 +89,7 @@ youtube_transcript_tool = Tool.from_function(
 
 # %%
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain.agents import initialize_agent, AgentType
 
@@ -107,21 +109,17 @@ agent = initialize_agent(
 )
 
 prompt_videos = ChatPromptTemplate.from_messages([
-    ("system", """Return a comma separated list of exactly 5 valid YouTube video IDs that are most 
-                  relevant to the user's query. 
-                  For example: 'id1,id2,id3,id4,id5'"""),
-    ("human", "{query}")
-])
+    sp1,
+    HumanMessagePromptTemplate.from_template(template="{query}")]
+    )
 
-prompt_video_transcript= ChatPromptTemplate.from_messages([
-    ("system", """Return the youtube transcript for the given video ID"""),
-    ("human", "{query}")
-])
+prompt_video_transcript = ChatPromptTemplate.from_messages([
+    sp2, 
+    HumanMessagePromptTemplate.from_template(template="{query}")])
 
 prompt_answer = ChatPromptTemplate.from_messages([
-    ("system", "Use the context below to answer the question."),
-    ("human", "{query}\n\nContext:\n{context}")
-])
+    sp3, 
+    HumanMessagePromptTemplate.from_template(template="{query}\n\nContext:\n{context}")])
 
 
 # %% [markdown]
@@ -133,7 +131,7 @@ from langchain_openai import OpenAIEmbeddings
 
 embedding_model = OpenAIEmbeddings()
 
-vectorstore = None  # Global FAISS store
+vectorstore = None  # Global FAISS store (lazy init)
 
 # %% [markdown]
 # ## Graph Nodes/Lambdas
@@ -143,20 +141,18 @@ from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def step_get_video_ids(state):
-    query = state["query"]
     video_ids=[]
-    messages = prompt_videos.invoke({"query": query})
+    messages = prompt_videos.invoke({"query": state["query"]})
     response = agent.invoke(messages)
     video_ids = response['output'].split(',')
     print(f"Retrieved and filtered Video IDs: {video_ids}")
-    return {"query": query, "video_ids": video_ids}
+    return {"query": state["query"], "video_ids": video_ids}
 
 def step_get_transcripts(state):
-    video_ids = state["video_ids"]
     docs = []
-    for vid in video_ids:
+    for vid in state["video_ids"]:
         try:
-            messages = prompt_video_transcript.invoke({"query": query})
+            messages = prompt_video_transcript.invoke({"query": state["query"], "video_id": vid})
             response = agent.invoke(messages)
             docs.append(Document(page_content=response['output'], metadata={"video_id": vid}))
         except Exception:
@@ -167,10 +163,9 @@ def step_get_transcripts(state):
     return {"query": state["query"], "documents": docs}
 
 def step_embed_docs(state):
-    docs = state["documents"]
-    if docs:
+    if state["documents"]:
         splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-        chunks = splitter.split_documents(docs)
+        chunks = splitter.split_documents(state["documents"])
         global vectorstore
         vectorstore = FAISS.from_documents(chunks, embedding_model)
     return {"query": state["query"]}
