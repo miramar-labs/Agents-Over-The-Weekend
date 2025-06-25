@@ -29,11 +29,9 @@ tracer = LangChainTracer()
 # %%
 from langchain_core.messages import SystemMessage
 
-t="""Return a comma separated list of exactly 5 valid YouTube video IDs 
+sp1=SystemMessage(content="""Return a comma separated list of exactly 5 valid YouTube video IDs 
 that are most relevant to the user's query.
-For example: 'id1,id2,id3,id4,id5'"""
-
-sp1=SystemMessage(content=t)
+For example: 'id1,id2,id3,id4,id5'""")
 
 sp2=SystemMessage(content="Use the context below to answer the question.")
 
