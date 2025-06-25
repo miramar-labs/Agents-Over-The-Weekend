@@ -182,8 +182,8 @@ def step_rag_answer(state):
         results = retriever.invoke(state["query"])
         context = "\n\n".join(doc.page_content for doc in results)
     messages = prompt_answer.invoke({"query": state["query"], "context": context})
-    response = llm.invoke(messages).content
-    return {"answer": response}
+    response = agent.invoke(messages)
+    return {"answer": response['output']}
 
 # %% [markdown]
 # ## Orchestrator
