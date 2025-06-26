@@ -101,23 +101,16 @@ And receive a grounded, specific answer with optional speaker attribution.
   
 - First set up a python venv and work in that:
 
-        # (*if* we need sqlite3) build a version of python with sqlite3 built-in 
-        sudo apt-get update
-        sudo apt-get install libsqlite3-dev
-
         # build some version of python
         pyenv install 3.13.0
 
-        # now create a virtual env with this sql-enabled python
+        # now create a virtual env with this version of python
         pyenv virtualenv 3.13.0 aotw
 
         # set it as the venv for team-6 folder
         cd Agents-Over-The-Weekend/team-6
-
         pyenv local aotw
-        
-        # ensure sqlite3 not listed in requirements.txt
-        
+                
         # install any packages we need
         pip install -r requirements.txt
 
