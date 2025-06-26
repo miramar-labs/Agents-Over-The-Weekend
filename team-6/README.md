@@ -125,4 +125,5 @@ And receive a grounded, specific answer with optional speaker attribution.
 
         LANGCHAIN_API_KEY=
         LANGCHAIN_TRACING_V2=true
-        GOOGLE_API_KEY=
+        OPENAI_API_KEY=
+        YOUTUBE_API_KEY=
