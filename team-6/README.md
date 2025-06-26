@@ -66,14 +66,37 @@ And receive a grounded, specific answer with optional speaker attribution.
 - [LangChain](https://python.langchain.com/docs/introduction/)
 - [LangChain Python API](https://python.langchain.com/api_reference/)
 #### API Keys
-- [Google AI Studio](https://aistudio.google.com/prompts/new_chat)
-  - get API key `GOOGLE_API_KEY`
 
-- [LangSmith](https://smith.langchain.com/)
-  - get API key `LANGCHAIN_API_KEY`
+- `YOUTUBE_API_KEY`
+  1. Go to Google Cloud Console
+  👉 https://console.cloud.google.com/
 
-- [OpenAI Platform](https://platform.openai.com/docs/overview)
-  - get API key`OPENAI_API_KEY`
+      Create or select a project
+      
+      Click the project dropdown (top left) and choose an existing project or click “New Project”.
+
+  1. Enable YouTube Data API v3
+   
+      In the left sidebar, go to “APIs & Services” > “Library”
+
+      Search for “YouTube Data API v3”
+
+      Click it, then click “Enable”
+
+  2. Create API Credentials
+   
+      Go to “APIs & Services” > “Credentials”
+
+      Click “+ CREATE CREDENTIALS” > choose “API key”
+
+      A key will be generated — copy and save it
+
+- `LANGCHAIN_API_KEY`
+  - [LangSmith](https://smith.langchain.com/)
+
+- `OPENAI_API_KEY`
+  - [OpenAI Platform](https://platform.openai.com/docs/overview)
+
 ### Linux/WSL:
   
 - First set up a python venv and work in that:
